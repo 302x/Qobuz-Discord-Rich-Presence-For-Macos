@@ -10,17 +10,19 @@ enum QobuzLogReader {
     }
 
     private static func readCurrentTrack() -> NowPlayingTrack? {
-        guard let trackID = latestPlayingTrackID(),
-              let metadata = metadata(for: trackID) else {
+        guard let playback = latestPlayback(),
+              let metadata = metadata(for: playback.trackID) else {
             return nil
         }
+
+        let elapsed = elapsedTime(since: playback.startedAt, duration: metadata.duration)
 
         return NowPlayingTrack(
             title: metadata.title,
             artist: metadata.artist,
             album: metadata.album,
             duration: metadata.duration,
-            elapsed: nil,
+            elapsed: elapsed,
             playbackRate: 1,
             sourceApplication: "Qobuz",
             bundleIdentifier: "com.qobuz.desktop",
@@ -28,26 +30,23 @@ enum QobuzLogReader {
         )
     }
 
-    private static func latestPlayingTrackID() -> String? {
+    private static func latestPlayback() -> Playback? {
         guard let logURL = newestLogURL(),
               let log = try? String(contentsOf: logURL, encoding: .utf8) else {
             return nil
         }
-
-        var latestTrackID: String?
 
         for line in log.split(separator: "\n").reversed() {
             if line.contains("Status has changed to Stopped") {
                 return nil
             }
 
-            if let trackID = trackID(from: String(line)) {
-                latestTrackID = trackID
-                break
+            if let playback = playback(from: String(line)) {
+                return playback
             }
         }
 
-        return latestTrackID
+        return nil
     }
 
     private static func newestLogURL() -> URL? {
@@ -74,14 +73,38 @@ enum QobuzLogReader {
         return values?.contentModificationDate ?? .distantPast
     }
 
-    private static func trackID(from line: String) -> String? {
+    private static func playback(from line: String) -> Playback? {
         guard let range = line.range(of: "Play track ") else {
             return nil
         }
 
         let suffix = line[range.upperBound...]
         let digits = suffix.prefix { $0.isNumber }
-        return digits.isEmpty ? nil : String(digits)
+        guard !digits.isEmpty,
+              let timestamp = timestamp(from: line) else {
+            return nil
+        }
+
+        return Playback(trackID: String(digits), startedAt: timestamp)
+    }
+
+    private static func timestamp(from line: String) -> Date? {
+        guard let end = line.firstIndex(of: ":") else {
+            return nil
+        }
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: String(line[..<end]))
+    }
+
+    private static func elapsedTime(since startedAt: Date, duration: TimeInterval?) -> TimeInterval {
+        let elapsed = max(0, Date().timeIntervalSince(startedAt))
+        guard let duration, duration > 0 else {
+            return elapsed
+        }
+
+        return min(elapsed, duration)
     }
 
     private static func metadata(for trackID: String) -> TrackMetadata? {
@@ -155,6 +178,11 @@ enum QobuzLogReader {
         return url
             .replacingOccurrences(of: "_230.jpg", with: "_600.jpg")
             .replacingOccurrences(of: "_150.jpg", with: "_600.jpg")
+    }
+
+    private struct Playback {
+        let trackID: String
+        let startedAt: Date
     }
 
     private struct TrackMetadata {
