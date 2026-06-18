@@ -41,9 +41,8 @@ The app reads macOS Now Playing data. The Qobuz-only filter is available in the 
 
 - Discord must be installed on the same Mac. Your self account is used automatically because Discord Rich Presence runs through the local desktop client.
 - The app uses Discord's local IPC socket; it does not need a bot token.
-- The app uses Music Presence's public Qobuz Discord application ID, so you do not need to paste your own ID.
-- Discord Rich Presence still requires an application ID internally; this app just bundles the Qobuz one.
-- Album art is not sent by default because Discord Rich Presence image assets must be configured on the Discord application.
+- Discord Rich Presence requires an application ID internally. This app bundles a public Qobuz activity ID, so you do not need to paste your own.
+- Album art is sent when Qobuz stores a cover URL for the current track. If no cover is available, Discord falls back to the bundled Qobuz activity artwork.
 
 ## Privacy
 
