@@ -112,6 +112,44 @@ enum QobuzLogReader {
             return nil
         }
 
+        if let metadata = liveMetadata(for: trackID) {
+            return metadata
+        }
+
+        return cachedMetadata(for: trackID)
+    }
+
+    private static func liveMetadata(for trackID: String) -> TrackMetadata? {
+        let dbURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Qobuz/qobuz.db")
+
+        guard FileManager.default.fileExists(atPath: dbURL.path) else {
+            return nil
+        }
+
+        let query = """
+        select
+            json_extract(data, '$.title'),
+            coalesce(
+                json_extract(data, '$.performer.name'),
+                json_extract(data, '$.album.artist.name')
+            ),
+            json_extract(data, '$.album.title'),
+            json_extract(data, '$.duration'),
+            coalesce(
+                json_extract(data, '$.album.assetsAPI.large'),
+                json_extract(data, '$.album.image.large'),
+                json_extract(data, '$.album.image.thumbnail')
+            )
+        from L_Track
+        where track_id = '\(trackID)'
+        limit 1;
+        """
+
+        return trackMetadata(dbURL: dbURL, query: query)
+    }
+
+    private static func cachedMetadata(for trackID: String) -> TrackMetadata? {
         let dbURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/Qobuz/qobuz.db")
 
@@ -126,6 +164,10 @@ enum QobuzLogReader {
         limit 1;
         """
 
+        return trackMetadata(dbURL: dbURL, query: query)
+    }
+
+    private static func trackMetadata(dbURL: URL, query: String) -> TrackMetadata? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
         process.arguments = ["-separator", "\t", dbURL.path, query]
