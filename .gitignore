@@ -4,3 +4,4 @@
 .swiftpm/
 .vscode/
 dist/
+*.iconset/

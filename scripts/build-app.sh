@@ -14,5 +14,6 @@ rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp ".build/release/$PRODUCT_NAME" "$APP_DIR/Contents/MacOS/$PRODUCT_NAME"
 cp "macos/Info.plist" "$APP_DIR/Contents/Info.plist"
+cp "macos/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 
 echo "Built $APP_DIR"
