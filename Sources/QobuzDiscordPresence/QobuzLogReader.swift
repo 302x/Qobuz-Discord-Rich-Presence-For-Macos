@@ -89,13 +89,13 @@ enum QobuzLogReader {
     }
 
     private static func timestamp(from line: String) -> Date? {
-        guard let end = line.firstIndex(of: ":") else {
+        guard let end = line.range(of: "Z:")?.lowerBound else {
             return nil
         }
 
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: String(line[..<end]))
+        return formatter.date(from: String(line[...end]))
     }
 
     private static func elapsedTime(since startedAt: Date, duration: TimeInterval?) -> TimeInterval {
