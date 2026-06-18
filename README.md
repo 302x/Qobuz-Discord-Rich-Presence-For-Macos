@@ -2,6 +2,19 @@
 
 A tiny macOS menu bar app that publishes the current Qobuz track to Discord Rich Presence.
 
+## macOS Security Warning
+
+This app is not currently signed or notarized with an Apple Developer account. Because of that, macOS may show a warning that the app cannot be opened or that the developer cannot be verified.
+
+To open it:
+
+1. Move the app to your Applications folder.
+2. Right-click `Qobuz Discord Presence.app`.
+3. Click `Open`.
+4. Confirm `Open` again when macOS asks.
+
+You only need to do this the first time.
+
 ## Build
 
 ```sh
